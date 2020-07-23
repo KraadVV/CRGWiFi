@@ -1,4 +1,6 @@
 import sys
+import test
+import sniffer
 
 '''
 without argv: print help
@@ -17,6 +19,13 @@ extract mode: extract img/pdf/or something...
 -argv type: main.py -e abc.pcap
 '''
 
+a = test.MonitorCheck()
+iwName = a.iwName
+iwStatus = a.monitorStatus
+
+if iwStatus != True:
+    print("No Monitor interface Detected")
+    sys.exit()
 
 #test line
 for argv in sys.argv:
@@ -27,6 +36,7 @@ for argv in sys.argv:
 try:
     if sys.argv[1] =="-s":
         print("scanner mode active")
+        sniffer.scanAP(iwName)
 
     elif sys.argv[1] == "-c":
         print("capture mode active")
@@ -46,6 +56,7 @@ try:
     else:
         print("invalid operation ", argv[1])
         print("try main.py -h to view more help")
+
 
 except:
     print("unknown error detected: process ceased")

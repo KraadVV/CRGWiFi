@@ -25,8 +25,8 @@ def findSSID(pkt):
                print("Hidden Network Detected")
            print("Network Detected:", ssid, ", on channel ",)
 
-def scanAP:
-    interface = "wlan0mon"
+def scanAP(interface):
+
     thread = threading.Thread(target=hopper, args=(interface, ), name="hopper")
     thread.daemon = True
     thread.start()
