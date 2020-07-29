@@ -1,5 +1,5 @@
 import sys
-import test
+import monCheck
 import sniffer
 
 '''
@@ -19,7 +19,8 @@ extract mode: extract img/pdf/or something...
 -argv type: main.py -e abc.pcap
 '''
 
-a = test.MonitorCheck()
+a = monCheck.MonitorCheck()
+s = sniffer.sniffmodule()
 iwName = a.iwName
 iwStatus = a.monitorStatus
 
@@ -28,35 +29,37 @@ if iwStatus != True:
     sys.exit()
 
 #test line
+'''
 for argv in sys.argv:
     print('arg value = ', argv)
 
+'''
 
 #switch here, activate module
-try:
-    if sys.argv[1] =="-s":
-        print("scanner mode active")
-        sniffer.scanAP(iwName)
+#try:
+if sys.argv[1] =="-s":
+    print("scanner mode active")
+    s.scanner(iwName)
+    print("scan complete")
 
-    elif sys.argv[1] == "-c":
-        print("capture mode active")
+elif sys.argv[1] == "-c":
+    print("capture mode active")
 
-    elif sys.argv[1] == "-e":
-        print("extract mode active")
+elif sys.argv[1] == "-e":
+    print("extract mode active")
 
-    elif sys.argv[1] == "-h":
-        print("usage:\n")
-        print("scanner mode : main.py -s\n")
-        print("you can scan nearby STA and AP\n\n")
-        print("capture mode : main.py -c target_AP_MAC target_STA_MAC AP_password\n")
-        print("you can capture packet between target AP and STA and save to PCAP file\n\n")
-        print("extract mode : main.py -e pcap_file_name -t [jpeg/pdf/avi]\n")
-        print("you can extract file from captured pcap file\n")
+elif sys.argv[1] == "-h":
+    print("usage:\n")
+    print("scanner mode : main.py -s\n")
+    print("you can scan nearby STA and AP\n\n")
+    print("capture mode : main.py -c target_AP_MAC target_STA_MAC AP_password\n")
+    print("you can capture packet between target AP and STA and save to PCAP file\n\n")
+    print("extract mode : main.py -e pcap_file_name -t [jpeg/pdf/avi]\n")
+    print("you can extract file from captured pcap file\n")
 
-    else:
-        print("invalid operation ", argv[1])
-        print("try main.py -h to view more help")
+else:
+    print("invalid operation ", argv[1])
+    print("try main.py -h to view more help")
 
-
-except:
-    print("unknown error detected: process ceased")
+'''except:
+    print("unknown error detected: process ceased")'''

@@ -1,3 +1,4 @@
+#module that checks iface monitor mode
 import os
 import sys
 
@@ -16,8 +17,9 @@ class MonitorCheck():
     iwConTemp = iwConMessage[:MonitorIdx]
     iwConTempRev = iwConTemp[::-1]
     MonitorIwIdx = iwConTempRev.find('\n')
-    iwConTempRev2 = iwConTempRev[:MonitorIwIdx]
-    iwFinal = iwConTempRev2[::-1]
+    if MonitorIwIdx != -1:
+        iwConTempRev = iwConTempRev[:MonitorIwIdx]
+    iwFinal = iwConTempRev[::-1]
     iwName = iwFinal[:iwFinal.find('  IEEE')]
 
     monitorStatus = True
