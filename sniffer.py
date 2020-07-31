@@ -5,21 +5,6 @@ import time
 import random
 from scapy.all import *
 
-class AP_list:
-    def __init__(self):
-        self.ap_list = []
-        self.index = 0
-
-    def add(self, id, ssid, mac, channel): # AP 클래스의 생성자 이용
-        a = AP(id, ssid, mac, channel)
-        self.ap_list.append(a)
-
-    def __iter__(self): # 클래스를 반복 가능하게 만들기 (for문 사용하기 위해)
-        while self.index < len(self.ap_list):
-            yield self.ap_list[self.index]
-            self.index += 1
-        return self
-
 class AP:
     def __init__(self, id, ssid, mac, channel):
         self.id = id
@@ -39,7 +24,7 @@ class AP:
     def channel(self): # channel 불러오기
         return self.channel
 
-aplist = AP_list()
+aplist = []
 
 class sniffmodule():
     #stophopper = False
@@ -62,12 +47,13 @@ class sniffmodule():
            mac = pkt.getlayer(Dot11).addr2 # mac주소를 추출하고
            ssid = pkt.getlayer(Dot11Elt).info  # ssid를 추출하고
            if mac not in BSSID: # 해당 bssid가 리스트에 없다면
-               if ssid != "" : # ssid가 존재한다면
+               if ssid != "" and sum(list(ssid)) != 0 : # ssid가 존재한다면
                    BSSID.append(mac) # 리스트에 추가하고
                    ssid = pkt.getlayer(Dot11Elt).info # ssid를 추출하고
                    channel = int(ord(pkt[Dot11Elt:3].info)) # 그 ap가 존재하는 채널을 추출하고
                    id = int(len(BSSID)) # 잡은 순서대로 ap에 번호를 매겨
-                   aplist.add(id, ssid, mac, channel) # AP 클래스 객체로 만들어 AP_list 클래스를 통해 인덱싱
+                   a = AP(id, ssid, mac, channel)
+                   aplist.append(a)
 
     def scanner(self, iface, sec):
         interface = iface # interface를 wlan0mon으로 하여(모니터 모드 설정 필요)
