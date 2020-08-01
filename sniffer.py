@@ -24,10 +24,10 @@ class AP:
     def channel(self): # channel 불러오기
         return self.channel
 
-aplist = []
 
 class sniffmodule():
     #stophopper = False
+
     def hopper(iface, sec): # 채널 돌리는 함수
         n = 1 # 채널 1에서 시작
         #stop_hopper = sniffmodule.stophopper #at here, found issue that hopper not stop.
@@ -40,9 +40,12 @@ class sniffmodule():
                 n = dig
 
     F_bssids = []    # Found BSSIDs
+    F_APs = []
+    target_id = 1
     
-    def findSSID(pkt): # SSID 찾는 함수
+    def findAP(pkt): # SSID 찾는 함수
         BSSID = sniffmodule.F_bssids
+        aplist = sniffmodule.F_APs
         if pkt.haslayer(Dot11Beacon): # 패킷이 802.11 비콘 프레임이라면
            mac = pkt.getlayer(Dot11).addr2 # mac주소를 추출하고
            ssid = pkt.getlayer(Dot11Elt).info  # ssid를 추출하고
@@ -54,16 +57,53 @@ class sniffmodule():
                    id = int(len(BSSID)) # 잡은 순서대로 ap에 번호를 매겨
                    a = AP(id, ssid, mac, channel)
                    aplist.append(a)
+    
+    def select_target(self) :
+        target = sniffmodule.target_id
+        target = int(input('give me target id : ')) - 1
+        
+    F_STAs = []
+    
+    def findSTA(pkt) :
+        if pkt.haslayer(Dot11) and pkt.getlayer(Dot11).type == 2 and not pkt.haslayer(EAPOL):
+            # This means it's data frame.
+            sn = pkt.getlayer(Dot11).addr2.upper()
+            rc = pkt.getlayer(Dot11).addr1.upper()
 
-    def scanner(self, iface, sec):
+            aplist = sniffmodule.F_APs
+            stalist = sniffmodule.F_STAs
+            i = sniffmodule.target_id
+            target_mac = aplist[i].mac
+            if sn == target_mac and rc not in stalist :
+                stalist.append(rc)
+            elif rc == target_mac and sn not in stalist :
+                stalist.append(sn)
+
+
+    def AP_scanner(self, iface, sec):
         interface = iface # interface를 wlan0mon으로 하여(모니터 모드 설정 필요)
         thread = threading.Thread(target = sniffmodule.hopper(iface, sec), args=(interface, sec, ), name="hopper") # 서브쓰레드에서 hopper 함수 실행
         thread.daemon = True # 이 서브쓰레드는 데몬쓰레드(메인쓰레드 종료되면 종료)
         thread.start() # 서브쓰레드 시작
 
-        sniff(iface=interface, prn=sniffmodule.findSSID, timeout=sec) # scapy의 sniff 함수 이용, 함수의 인자로 findSSID 함수 사용
+        sniff(iface=interface, prn=sniffmodule.findAP, timeout=sec) # scapy의 sniff 함수 이용, 함수의 인자로 findAP 함수 사용
         #sniffmodule.stophopper = True
+        aplist = sniffmodule.F_APs
         for a in aplist:
             print(a.id,"번 ap 이름 : ", a.ssid, " mac 주소 : ", a.mac, " 채널 : ", a.channel)
             
+        print("end of scan")
+        
+    def STA_scanner(self, iface, sec) :
+        interface = iface
+        aplist = sniffmodule.F_APs
+        i = sniffmodule.target_id
+        n = aplist[i].channel
+        os.system('iwconfig %s channel %d' % (iface, n))
+        
+        sniff(iface=interface, prn=sniffmodule.findSTA, timeout=sec)
+        stalist = sniffmodule.F_STAs
+        for a in stalist:
+            print(a)
+
         print("end of scan")

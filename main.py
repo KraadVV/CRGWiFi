@@ -36,7 +36,10 @@ for argv in sys.argv:
 if sys.argv[1] =="-s":
     print("scanner mode active")
     sec = int(input("set time to scan: "))
-    s.scanner(iwName, sec)
+    s.AP_scanner(iwName, sec)
+    s.select_target()
+    sec = int(input("set time to scan: "))
+    s.STA_scanner(iwName, sec)
     print("scan complete")
 
 elif sys.argv[1] == "-c":
