@@ -58,22 +58,22 @@ class sniffmodule():
                    a = AP(id, ssid, mac, channel)
                    aplist.append(a)
     
-    def select_target(self) :
+    def select_target(self) : # 잡은 AP 중에서 타겟 선정
         target = sniffmodule.target_id
-        target = int(input('give me target id : ')) - 1
+        target = int(input('give me target id : '))
         
     F_STAs = []
     
     def findSTA(pkt) :
         if pkt.haslayer(Dot11) and pkt.getlayer(Dot11).type == 2 and not pkt.haslayer(EAPOL):
-            # This means it's data frame.
-            sn = pkt.getlayer(Dot11).addr2.upper()
-            rc = pkt.getlayer(Dot11).addr1.upper()
+            # 802.11 패킷이며, 연결이 성사된 데이터 프레임이고, 실패한 인증 패킷이 아닌 경우에만
+            sn = pkt.getlayer(Dot11).addr2.upper() # 송신자 맥주소
+            rc = pkt.getlayer(Dot11).addr1.upper() # 수신자 맥주소
 
             aplist = sniffmodule.F_APs
             stalist = sniffmodule.F_STAs
             i = sniffmodule.target_id
-            target_mac = aplist[i].mac
+            target_mac = aplist[i-1].mac # 선정한 타겟 AP의 맥주소 정보 가져오기
             if sn == target_mac and rc not in stalist :
                 stalist.append(rc)
             elif rc == target_mac and sn not in stalist :
@@ -97,9 +97,9 @@ class sniffmodule():
     def STA_scanner(self, iface, sec) :
         interface = iface
         aplist = sniffmodule.F_APs
-        i = sniffmodule.target_id
+        i = sniffmodule.target_id # 선정한 타겟 AP의 채널정보 가져오기
         n = aplist[i].channel
-        os.system('iwconfig %s channel %d' % (iface, n))
+        os.system('iwconfig %s channel %d' % (iface, n)) # 채널 고정!
         
         sniff(iface=interface, prn=sniffmodule.findSTA, timeout=sec)
         stalist = sniffmodule.F_STAs

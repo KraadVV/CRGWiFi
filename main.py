@@ -38,8 +38,8 @@ if sys.argv[1] =="-s":
     sec = int(input("set time to scan: "))
     s.AP_scanner(iwName, sec)
     s.select_target()
-    sec = int(input("set time to scan: "))
-    s.STA_scanner(iwName, sec)
+    sec1 = int(input("set time to scan: "))
+    s.STA_scanner(iwName, sec1)
     print("scan complete")
 
 elif sys.argv[1] == "-c":
