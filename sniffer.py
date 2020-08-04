@@ -59,8 +59,7 @@ class sniffmodule():
                    aplist.append(a)
     
     def select_target(self) : # 잡은 AP 중에서 타겟 선정
-        target = sniffmodule.target_id
-        target = int(input('give me target id : '))
+        sniffmodule.target_id = int(input('give me target id : '))
         
     F_STAs = []
     
@@ -74,6 +73,7 @@ class sniffmodule():
             stalist = sniffmodule.F_STAs
             i = sniffmodule.target_id
             target_mac = aplist[i-1].mac # 선정한 타겟 AP의 맥주소 정보 가져오기
+            #print(target_mac)
             if sn == target_mac and rc not in stalist :
                 stalist.append(rc)
             elif rc == target_mac and sn not in stalist :
@@ -98,10 +98,14 @@ class sniffmodule():
         interface = iface
         aplist = sniffmodule.F_APs
         i = sniffmodule.target_id # 선정한 타겟 AP의 채널정보 가져오기
-        n = aplist[i].channel
+        n = aplist[i-1].channel
+        #print(n)
         os.system('iwconfig %s channel %d' % (iface, n)) # 채널 고정!
         
+        '''for channel in range(1,14) :
+            os.system('iwconfig %s channel %d' % (iface, channel))'''
         sniff(iface=interface, prn=sniffmodule.findSTA, timeout=sec)
+            
         stalist = sniffmodule.F_STAs
         for a in stalist:
             print(a)
