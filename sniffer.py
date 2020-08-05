@@ -23,6 +23,17 @@ class AP:
 
     def channel(self): # channel 불러오기
         return self.channel
+    
+class STA:
+    def __init__(self, id, mac):
+        self.id = id
+        self.mac = mac
+    
+    def id(self):
+        return self.id
+    
+    def mac(self):
+        return self.mac
 
 
 class sniffmodule():
@@ -59,25 +70,31 @@ class sniffmodule():
                    aplist.append(a)
     
     def select_target(self) : # 잡은 AP 중에서 타겟 선정
-        sniffmodule.target_id = int(input('give me target id : '))
-        
+        target = int(input('give me target id : ')) - 1
+        sniffmodule.target_id = target
+
+    F_macs = []
     F_STAs = []
-    
-    def findSTA(pkt) :
+
+    def findSTA(pkt):
         if pkt.haslayer(Dot11) and pkt.getlayer(Dot11).type == 2 and not pkt.haslayer(EAPOL):
             # 802.11 패킷이며, 연결이 성사된 데이터 프레임이고, 실패한 인증 패킷이 아닌 경우에만
-            sn = pkt.getlayer(Dot11).addr2.upper() # 송신자 맥주소
-            rc = pkt.getlayer(Dot11).addr1.upper() # 수신자 맥주소
+            sn = pkt.getlayer(Dot11).addr2 # 송신자 맥주소
+            rc = pkt.getlayer(Dot11).addr1 # 수신자 맥주소
 
             aplist = sniffmodule.F_APs
+            maclist = sniffmodule.F_macs
             stalist = sniffmodule.F_STAs
             i = sniffmodule.target_id
-            target_mac = aplist[i-1].mac # 선정한 타겟 AP의 맥주소 정보 가져오기
-            #print(target_mac)
-            if sn == target_mac and rc not in stalist :
-                stalist.append(rc)
-            elif rc == target_mac and sn not in stalist :
-                stalist.append(sn)
+            target_mac = aplist[i].mac # 선정한 타겟 AP의 맥주소 정보 가져오기
+            
+            if sn == target_mac and rc not in maclist :
+                a = STA(len(maclist), rc)
+                stalist.append(a)
+            elif rc == target_mac and sn not in maclist :
+                a = STA(len(maclist), sn)
+                stalist.append(a)
+
 
 
     def AP_scanner(self, iface, sec):
@@ -98,16 +115,15 @@ class sniffmodule():
         interface = iface
         aplist = sniffmodule.F_APs
         i = sniffmodule.target_id # 선정한 타겟 AP의 채널정보 가져오기
-        n = aplist[i-1].channel
-        #print(n)
+        n = aplist[i].channel
+        print("Starting scan on STA connected with AP: ", aplist[i].ssid)
         os.system('iwconfig %s channel %d' % (iface, n)) # 채널 고정!
         
-        '''for channel in range(1,14) :
-            os.system('iwconfig %s channel %d' % (iface, channel))'''
+
         sniff(iface=interface, prn=sniffmodule.findSTA, timeout=sec)
             
         stalist = sniffmodule.F_STAs
         for a in stalist:
-            print(a)
+            print(a.id, "번 station mac 주소 : ", a.mac)
 
         print("end of scan")
