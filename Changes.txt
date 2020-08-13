@@ -18,8 +18,9 @@ lo        no wireless extensions.
 2. main.py 
 
 1) sys.argc가 0일 때 에러 추가하도록 함.
-2) help message 변경
-3) 전반적인 논리 순서 변경
+2) help message 변경.
+3) 전반적인 논리 순서 변경.
+4) Debug 하는 UI로 변경.
 
 3. sniffer.py
 
@@ -32,7 +33,9 @@ lo        no wireless extensions.
 - channel을 "pkt[Dot11Elt:3].info" 형식으로 구하는데, 3번째가 아닌 4번째에 인자가 오는 경우가 있어 이를 예외처리하였음.
 - 이 경우 대부분 비정상적인 와이파이인 경우가 많아, 그냥 패스하도록 처리했음.
 
-3) AP 1개도 발견하지 못했을 때 에러 출력하도록 변경.
+3) AP, STA 1개도 발견하지 못했을 때 에러 출력하도록 변경.
 - return 으로 status를 반환하도록 설정함.
 
-4) 대문자 해결?(이미 해결된거 아니었나..?)
+4) AP Class에 STA_list 추가해서 조금 효율적으로 STA 걸러낼 수 있도록 했음.
+
+5) Stop_Hopper Flag 부활해서 이를 통해 Stop 할 수 있도록 변경하였음.

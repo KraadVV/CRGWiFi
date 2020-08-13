@@ -1,6 +1,8 @@
 import sys
 import monCheck
 import sniffer
+import texttable
+import time
 
 '''
 without argv: print help
@@ -47,25 +49,48 @@ if __name__== '__main__':
     	help()
     
     elif sys.argv[1] =="-s":
+        # Init
         s = sniffer.sniffmodule(iwName)
-        print("scanner mode active")
+        print("[+] Scanner mode active")
         
-        sec = int(input("set time to scan: "))
+        # AP Scan Start
+        sec = int(input(" [+] AP Scan - Set time to scan: "))
         result = s.AP_scanner(sec)
         if not result:
-            print("AP scan Failed...")
+            print(" [*] AP scan Failed...")
             sys.exit()
-        s.select_target()
+        time.sleep(1)
         
-        sec = int(input("set time to scan: "))
-        s.STA_scanner(sec)
-        print("scan complete")
+        # Print Result as Table
+        AP = s.F_APs     
+        ta= texttable.Texttable()
+        ta.add_row(['id', 'SSID', 'mac'])
+        for aps in AP:
+            ta.add_row([aps.id, aps.ssid, aps.mac])
+        print(ta.draw())
+            
+        
+        # STA Scan Start    
+        s.select_target()
+        sec = int(input(" [+] STA Scan - Set time to scan: "))
+        result2 = s.STA_scanner(sec)
+        if not result2:
+            print(" [*] STA scan Failed...")
+            sys.exit()
+            
+        # Print Result as Table
+        STA = s.F_STAs
+        ts = texttable.Texttable()
+        ts.add_row(['id', 'mac'])
+        for stas in STA:
+            ts.add_row([stas.id, stas.mac])
+        print(ts.draw())
     
     elif sys.argv[1] == "-c":
-        print("capture mode active")
+        print("[+] capture mode active")
     
     elif sys.argv[1] == "-e":
-        print("extract mode active")
+        print("[+] extract mode active")
     
     elif sys.argv[1] == "-h":
         help()

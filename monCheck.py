@@ -9,7 +9,7 @@ class MonitorCheck():
 
     MonitorIdx = iwConMessage.find('Monitor')
     if MonitorIdx == -1:
-        print("No Monitor mode Found")
+        print("[-] No Monitor mode Found")
         monitorStatus = False
         sys.exit()
 
