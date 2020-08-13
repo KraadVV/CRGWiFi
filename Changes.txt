@@ -1,0 +1,38 @@
+에러 수정
+
+1. moncheck.py
+
+1) 잡음 제거
+- os.popen >> subprocess.popen으로 교체함.
+
+""" 제거한 에러 내용
+ens33     no wireless extensions.
+lo        no wireless extensions.
+"""
+
+2) interface not found error 해결.
+
+- interface에 공백 있었음.
+- moncheck.py에 strip() 추가
+
+2. main.py 
+
+1) sys.argc가 0일 때 에러 추가하도록 함.
+2) help message 변경
+3) 전반적인 논리 순서 변경
+
+3. sniffer.py
+
+1) sniffmodule 클래스 예쁘게 변경.
+- __init__() 추가하여, interface 반복 사용 및 코드 복잡 방지.
+- hopper 클래스 self 사용 문제 해결.
+- sniff 함수 self 사용 문제 해결.
+
+2) Channel 구할 때 간혹 발생하는 에러 해결.
+- channel을 "pkt[Dot11Elt:3].info" 형식으로 구하는데, 3번째가 아닌 4번째에 인자가 오는 경우가 있어 이를 예외처리하였음.
+- 이 경우 대부분 비정상적인 와이파이인 경우가 많아, 그냥 패스하도록 처리했음.
+
+3) AP 1개도 발견하지 못했을 때 에러 출력하도록 변경.
+- return 으로 status를 반환하도록 설정함.
+
+4) 대문자 해결?(이미 해결된거 아니었나..?)
