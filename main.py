@@ -1,6 +1,6 @@
 import sys
 import monCheck
-import sniffer
+import scanner
 
 '''
 without argv: print help
@@ -17,7 +17,7 @@ extract mode: extract img/pdf/or something...
 '''
 
 a = monCheck.MonitorCheck()
-s = sniffer.sniffmodule()
+s = scanner.sniffmodule()
 iwName = a.iwName
 iwStatus = a.monitorStatus
 
