@@ -1,13 +1,13 @@
 #module that checks iface monitor mode
-import os
+import subprocess
 import sys
 
 class MonitorCheck():
     iwsys = 'iwconfig'
-    iwConMessage = os.popen(iwsys).read()
+    popen = subprocess.Popen("iwconfig", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True).communicate()
+    iwConMessage = popen[0].decode()
 
     MonitorIdx = iwConMessage.find('Monitor')
-
     if MonitorIdx == -1:
         print("No Monitor mode Found")
         monitorStatus = False
@@ -20,6 +20,6 @@ class MonitorCheck():
     if MonitorIwIdx != -1:
         iwConTempRev = iwConTempRev[:MonitorIwIdx]
     iwFinal = iwConTempRev[::-1]
-    iwName = iwFinal[:iwFinal.find('  IEEE')]
+    iwName = iwFinal[:iwFinal.find('  IEEE')].strip()
 
     monitorStatus = True

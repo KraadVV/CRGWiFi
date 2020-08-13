@@ -16,50 +16,63 @@ extract mode: extract img/pdf/or something...
 -argv type: main.py -e abc.pcap
 '''
 
-a = monCheck.MonitorCheck()
-s = sniffer.sniffmodule()
-iwName = a.iwName
-iwStatus = a.monitorStatus
+def help():
+    print("""Public WiFi HACK!
 
-if iwStatus != True:
-    print("No Monitor interface Detected")
-    sys.exit()
+Usage:
+  crgwifi.py -s
+  crgwifi.py -e
+  crgwifi.py -c AP_MAC STA_MAC -o <Save_Dir>
+  crgwifi.py -h | --help
+  crgwifi.py --version
 
-#test line
-'''
-for argv in sys.argv:
-    print('arg value = ', argv)
-'''
+Options:
+  -s		Scan mode. Scan all AP and STA.
+  -c		Capture mode. When Authentication packet arrive, it automatically decrypt and save packets.
+  -h --help     Show this screen.
+  --version     Show version.""")
+  
+  
+if __name__== '__main__':
 
-#switch here, activate module
-#try:
-if sys.argv[1] =="-s":
-    print("scanner mode active")
-    sec = int(input("set time to scan: "))
-    s.AP_scanner(iwName, sec)
-    s.select_target()
-    sec = int(input("set time to scan: "))
-    s.STA_scanner(iwName, sec)
-    print("scan complete")
-
-elif sys.argv[1] == "-c":
-    print("capture mode active")
-
-elif sys.argv[1] == "-e":
-    print("extract mode active")
-
-elif sys.argv[1] == "-h":
-    print("usage:\n")
-    print("scanner mode : main.py -s\n")
-    print("you can scan nearby STA and AP\n\n")
-    print("capture mode : main.py -c target_AP_MAC target_STA_MAC AP_password\n")
-    print("you can capture packet between target AP and STA and save to PCAP file\n\n")
-    print("extract mode : main.py -e pcap_file_name -t [jpeg/pdf/avi]\n")
-    print("you can extract file from captured pcap file\n")
-
-else:
-    print("invalid operation ", argv[1])
-    print("try main.py -h to view more help")
+    a = monCheck.MonitorCheck()
+    iwName = a.iwName
+    iwStatus = a.monitorStatus
+    
+    if iwStatus != True:
+        print("No Monitor interface Detected")
+        sys.exit()
+    
+    if len(sys.argv) < 2:
+    	help()
+    
+    elif sys.argv[1] =="-s":
+        s = sniffer.sniffmodule(iwName)
+        print("scanner mode active")
+        
+        sec = int(input("set time to scan: "))
+        result = s.AP_scanner(sec)
+        if not result:
+            print("AP scan Failed...")
+            sys.exit()
+        s.select_target()
+        
+        sec = int(input("set time to scan: "))
+        s.STA_scanner(sec)
+        print("scan complete")
+    
+    elif sys.argv[1] == "-c":
+        print("capture mode active")
+    
+    elif sys.argv[1] == "-e":
+        print("extract mode active")
+    
+    elif sys.argv[1] == "-h":
+        help()
+    
+    else:
+        print("invalid operation ", argv[1])
+        print("try main.py -h to view more help")
 
 '''except:
     print("unknown error detected: process ceased")'''
