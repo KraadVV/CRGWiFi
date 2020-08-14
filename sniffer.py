@@ -84,25 +84,25 @@ class sniffmodule():
     def findSTA(self, pkt) :
         if pkt.haslayer(Dot11) and pkt.getlayer(Dot11).type == 2 and not pkt.haslayer(EAPOL):
             # This means it's data frame.
-            stalist = self.F_STAs
+
             sn = pkt.getlayer(Dot11).addr2
             rc = pkt.getlayer(Dot11).addr1
 
             i = self.target_id
             target_mac = self.F_APs[i].mac
             maclist = self.F_APs[i].STA_list
-
+            tempid = int(len(self.F_STAs))
             if sn == target_mac and rc not in maclist :
-                tmp = STA(len(stalist), rc)
-                stalist.append(tmp)
+                tmp = STA(len(tempid), rc)
+                self.F_STAs.append(tmp)
                 maclist.append(rc)
             elif rc == target_mac and sn not in maclist :
-                tmp = STA(len(stalist), sn)
-                stalist.append(tmp)
+                tmp = STA(len(self.F_STAs), sn)
+                self.F_STAs.append(tmp)
                 maclist.append(sn)
 
             # Update
-            self.F_STAs = stalist
+
             self.F_APs[i].STA_list = maclist
 
     def AP_scanner(self, sec):

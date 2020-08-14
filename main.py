@@ -83,7 +83,7 @@ if __name__== '__main__':
         ts = texttable.Texttable()
         ts.add_row(['id', 'mac'])
         for stas in STA:
-            ts.add_row([stas.id, stas.mac])
+            ts.add_row([stas.id+1, stas.mac])
         print(ts.draw())
     
     elif sys.argv[1] == "-c":
