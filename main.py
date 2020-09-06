@@ -1,8 +1,11 @@
 import sys
 import monCheck
-import sniffer
+import scanner
 import texttable
 import time
+import wpa2decryption
+
+from datetime import datetime
 
 '''
 without argv: print help
@@ -37,6 +40,18 @@ Options:
   
 if __name__== '__main__':
 
+    isScannerActive = False
+    isCaptureActive = False
+    isExtracterActive = False
+
+    if sys.argv[1] == "-s":
+        isScannerActive = True
+    elif sys.argv[1] == "-c":
+        isCaptureActive = True
+    elif sys.argv[1] == "-e":
+        isExtracterActive = True
+
+
     a = monCheck.MonitorCheck()
     iwName = a.iwName
     iwStatus = a.monitorStatus
@@ -48,9 +63,9 @@ if __name__== '__main__':
     if len(sys.argv) < 2:
     	help()
     
-    elif sys.argv[1] =="-s":
+    elif isScannerActive == True:
         # Init
-        s = sniffer.sniffmodule(iwName)
+        s = scanner.sniffmodule(iwName)
         print("[+] Scanner mode active")
         
         # AP Scan Start
@@ -85,19 +100,66 @@ if __name__== '__main__':
         for stas in STA:
             ts.add_row([stas.id+1, stas.mac])
         print(ts.draw())
+
+        print("[+] Enter capture mode? Y/N")
+        IsCaptureActive = input()
+        IsCaptureActive.lower()
+        while True:
+            try:
+                if IsCaptureActive =="y":
+                    isCaptureActive == True
+                    break
+                elif IsCaptureActive =="n":
+                    print("[+] Exit System")
+                    sys.exit()
+                else:
+                    continue
+            except:
+                print("[+] Error occured. please type again")
+                continue
+
+
     
-    elif sys.argv[1] == "-c":
+    elif isCaptureActive == True:
         print("[+] capture mode active")
+
+        if isScannerActive == False:
+            try:
+                AP_MAC = sys.argv[2]
+                STA_MAC = sys.argv[3]
+            except:
+                print("[+] MAC Error occured: please enter accurate MAC Address")
+                print("[+] AP MAC: ")
+                AP_MAC = input()
+                print("[+] STA MAC: ")
+                STA_MAC = input()
+
+        #대충 캡처해서 저장하는 부분이 들어갈 위
+
+        #save file location
+        now = datetime.now()
+        TimeInfo = now.year+"_"+now.month+"_"+now.day+"_"+now.hour+"_"+now.minute
+        FileLocation = "./Capture_"+TimeInfo #세이브파일 형식은 캡처_현재시각의 형태, 요 위치에 저장하도록 코드 짜길 요망
+
     
-    elif sys.argv[1] == "-e":
+    elif isExtracterActive == True:
         print("[+] extract mode active")
+        if isScannerActive == False:
+            try:
+                FileLocation = sys.argv[2]
+            except:
+                print("[+] File Location Error: please type correct file location")
+                FileLocation = input("[+] File Location: ")
+
+        wpa2decryption.decrypt(FileLocation) # 파일 로케이션을 인자로 받아서 돌리게끔 함
+
     
     elif sys.argv[1] == "-h":
         help()
     
     else:
-        print("invalid operation ", argv[1])
-        print("try main.py -h to view more help")
+        print("[+] invalid operation: ", sys.argv[1])
+        print("[+] try crgwifi.py -h to view more help")
 
 '''except:
     print("unknown error detected: process ceased")'''

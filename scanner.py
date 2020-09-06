@@ -54,7 +54,7 @@ class sniffmodule():
         #stop_hopper = sniffmodule.stophopper #at here,p found issue that hopper not stop.
         while not self.stop_hopper:
             time.sleep(0.50) # 프로세스 0.5초 정지
-            print("  [*] channel set to %d" % n)
+            #print("  [*] channel set to %d" % n)
             os.system('iwconfig %s channel %d' % (self.interface, n)) # 리눅스 명령어 이용, 채널변경
             dig = int(random.random() * 14) # 안겹치게 채널 무작위로 변경
             if dig != 0 and dig != n:
