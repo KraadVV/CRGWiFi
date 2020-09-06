@@ -10,15 +10,15 @@ from datetime import datetime
 '''
 without argv: print help
 scanner mode: print nearby AP and STA
--argv type: main.py -s or --scanner
+-argv type: crgwifi.py -s or --scanner
 -result: print SSID \t MAC \t channel
 on AP and STA nearvy
 capture mode: sniff&decode target STA&AP
--argv type: main.py -c target_ap_mac target_STA_mac password
+-argv type: crgwifi.py -c target_ap_mac target_STA_mac password
 -do: reset connection btween target AP and STA, capture auth packet, decode wpa2 encoded packet, save to pcap file
 -result: abc.pcap
 extract mode: extract img/pdf/or something...
--argv type: main.py -e abc.pcap
+-argv type: crgwifi.py -e abc.pcap
 '''
 
 def help():
