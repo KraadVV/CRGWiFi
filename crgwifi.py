@@ -140,6 +140,22 @@ if __name__== '__main__':
         now = datetime.now()
         TimeInfo = now.year+"_"+now.month+"_"+now.day+"_"+now.hour+"_"+now.minute
         FileLocation = "./Capture_"+TimeInfo #세이브파일 형식은 캡처_현재시각의 형태, 요 위치에 저장하도록 코드 짜길 요망
+        
+        IsExtracterActive = input("[+]Enter Extracter mode? Y/N: ")
+        IsExtracterActive.lower()
+        while True:
+            try:
+                if IsExtracterActive =="y":
+                    isExtracterActive == True
+                    break
+                elif IsExtracterActive =="n":
+                    print("[+] Exit System")
+                    sys.exit()
+                else:
+                    continue
+            except:
+                print("[+] Error occured. please type again")
+                continue
 
     
     elif isExtracterActive == True:
@@ -151,8 +167,7 @@ if __name__== '__main__':
                 print("[+] File Location Error: please type correct file location")
                 FileLocation = input("[+] File Location: ")
 
-        wpa2decryption.decrypt(FileLocation) # 파일 로케이션을 인자로 받아서 돌리게끔 함
-
+      
     
     elif sys.argv[1] == "-h":
         help()
