@@ -46,9 +46,9 @@ if __name__== '__main__':
 
     if sys.argv[1] == "-s":
         isScannerActive = True
-    elif sys.argv[1] == "-c":
+    if sys.argv[1] == "-c":
         isCaptureActive = True
-    elif sys.argv[1] == "-e":
+    if sys.argv[1] == "-e":
         isExtracterActive = True
 
 
@@ -61,9 +61,9 @@ if __name__== '__main__':
         sys.exit()
     
     if len(sys.argv) < 2:
-    	help()
+        help()
     
-    elif isScannerActive == True:
+    if isScannerActive == True:
         # Init
         s = scanner.sniffmodule(iwName)
         print("[+] Scanner mode active")
@@ -107,7 +107,7 @@ if __name__== '__main__':
         while True:
             try:
                 if IsCaptureActive =="y":
-                    isCaptureActive == True
+                    isCaptureActive = True
                     break
                 elif IsCaptureActive =="n":
                     print("[+] Exit System")
@@ -120,7 +120,7 @@ if __name__== '__main__':
 
 
     
-    elif isCaptureActive == True:
+    if isCaptureActive == True:
         print("[+] capture mode active")
 
         if isScannerActive == False:
@@ -158,7 +158,7 @@ if __name__== '__main__':
                 continue
 
     
-    elif isExtracterActive == True:
+    if isExtracterActive == True:
         print("[+] extract mode active")
         if isScannerActive == False:
             try:
@@ -169,7 +169,7 @@ if __name__== '__main__':
 
       
     
-    elif sys.argv[1] == "-h":
+    if sys.argv[1] == "-h":
         help()
     
     else:
