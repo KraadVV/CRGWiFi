@@ -146,7 +146,7 @@ if __name__== '__main__':
         while True:
             try:
                 if IsExtracterActive =="y":
-                    isExtracterActive == True
+                    isExtracterActive = True
                     break
                 elif IsExtracterActive =="n":
                     print("[+] Exit System")
